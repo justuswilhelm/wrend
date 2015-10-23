@@ -19,22 +19,22 @@ from .dom import Node
 class Parser:
 
     SELF_CLOSING_TAGS = [
-       'area',
-       'base',
-       'br',
-       'col',
-       'command',
-       'embed',
-       'hr',
-       'img',
-       'input',
-       'keygen',
-       'link',
-       'meta',
-       'param',
-       'source',
-       'track',
-       'wbr',
+       'AREA',
+       'BASE',
+       'BR',
+       'COL',
+       'COMMAND',
+       'EMBED',
+       'HR',
+       'IMG',
+       'INPUT',
+       'KEYGEN',
+       'LINK',
+       'META',
+       'PARAM',
+       'SOURCE',
+       'TRACK',
+       'WBR',
     ]
     tokens = []
     current = None
@@ -49,7 +49,7 @@ class Parser:
             debug('Dropping empty start token %s', self.tokens[0])
         debug('Starting recursive descent')
 
-        document = Node('document', 0)  # XXX node_type
+        document = Node('#document', Node.DOCUMENT_NODE)
         while not isinstance(self.current, EOF):
             document.child_nodes.append(self.node())
         return document
@@ -89,26 +89,25 @@ class Parser:
     def self_closing(self, parent_node=None):
         # XXX code smell
         if isinstance(self.current, Data):
-            child = Node(  # XXX node_type
-                "text", Node.TEXT_NODE,
+            child = Node(
+                "#text", Node.TEXT_NODE,
                 node_value=self.current.data,
                 parent_node=parent_node)
             self.match_type(Data)
         elif isinstance(self.current, Comment):
             child = Node(
-                "comment", Node.COMMENT_NODE, node_value=self.current.data,
+                "#comment", Node.COMMENT_NODE, node_value=self.current.data,
                 parent_node=parent_node)
             self.match_type(Comment)
         elif isinstance(self.current, Pi):
-            child = Node(
-                "processing_instruction", Node.PROCESSING_INSTRUCTION_NODE,
+            child = Node(  # XXX this is not cleanly implemented!
+                "#pi", Node.PROCESSING_INSTRUCTION_NODE,
                 node_value=self.current.data,
                 parent_node=parent_node)
             self.match_type(Pi)
         elif isinstance(self.current, Decl):
             child = Node(
-                 "document_type", Node.DOCUMENT_TYPE_NODE,
-                 node_value=self.current.decl,
+                 self.current.decl, Node.DOCUMENT_TYPE_NODE,
                  parent_node=parent_node)
             self.match_type(Decl)
         # self-closing start-tag

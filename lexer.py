@@ -18,10 +18,12 @@ class HTMLLexer(HTMLParser):
         super().__init__(convert_charrefs=True)
 
     def handle_starttag(self, tag, attrs):
+        tag = tag.upper()
         debug('Opening tag %s, attrs %s', tag, attrs)
         self.tokens.append(StartTag(tag, attrs))
 
     def handle_endtag(self, tag):
+        tag = tag.upper()
         debug('Closing tag %s', tag)
         self.tokens.append(EndTag(tag))
 
