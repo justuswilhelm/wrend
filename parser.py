@@ -1,7 +1,3 @@
-"""
-Keep in mind, for future reference, self-closing tags
-http://xahlee.info/js/html5_non-closing_tag.html
-"""
 from logging import debug
 
 from .lexer import (
