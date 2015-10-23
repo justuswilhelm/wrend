@@ -18,4 +18,5 @@ def main():
 
     tokens = lexer.dump()
     parser = Parser(tokens)
-    pprint(parser.parse())
+    ast = parser.parse()
+    pprint(ast)

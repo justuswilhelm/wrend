@@ -2,20 +2,40 @@
 Keep in mind, for future reference, self-closing tags
 http://xahlee.info/js/html5_non-closing_tag.html
 """
-from collections import namedtuple
 from logging import debug
 
 from .lexer import (
     StartTag,
     Data,
     EndTag,
+    Comment,
+    Decl,
+    Pi,
+    EOF,
 )
-
-Node = namedtuple('Node', ['name', 'nodes'])
+from .dom import Node
 
 
 class Parser:
 
+    SELF_CLOSING_TAGS = [
+       'area',
+       'base',
+       'br',
+       'col',
+       'command',
+       'embed',
+       'hr',
+       'img',
+       'input',
+       'keygen',
+       'link',
+       'meta',
+       'param',
+       'source',
+       'track',
+       'wbr',
+    ]
     tokens = []
     current = None
 
@@ -29,33 +49,84 @@ class Parser:
             debug('Dropping empty start token %s', self.tokens[0])
         debug('Starting recursive descent')
 
-        return self.tag()
+        document = Node('document', 0)  # XXX node_type
+        while not isinstance(self.current, EOF):
+            document.child_nodes.append(self.node())
+        return document
 
-    def tag(self):
-        start_token = self.current
+    def node(self, parent_node=None):
+        if not isinstance(self.current, StartTag):
+            return self.self_closing(parent_node=parent_node)
+
+        if self.current.name in self.SELF_CLOSING_TAGS:
+            debug("Encountered self-closing <%s>", self.current.name)
+            return self.self_closing(parent_node=parent_node)
+
+        debug("Entering <%s>", self.current.name)
+
+        # Store token for later matching
+        current_node = Node(
+            self.current.name, Node.ELEMENT_NODE,
+            attributes=self.current.attributes)
         self.match_type(StartTag)
-        debug(
-            "Starting tag: %s", start_token.name)
+        debug("Creating <%s> Node", current_node)
 
-        nodes = []
-        while True:
-            if isinstance(self.current, StartTag):
-                debug("Entering %s", self.current)
-                nodes.append(self.tag())
-            elif isinstance(self.current, EndTag):
-                self.match_name(start_token.name)
-                return Node(start_token.name, nodes)
-            else:
-                debug("Reading data tag %s", self.current)
-                nodes.append(self.current)
-                self.match_type(Data)
+        # While there are things to match
+        while self.current:
+            if isinstance(self.current, EndTag):
+                debug("<%s> children: %s", current_node,
+                      current_node.child_nodes)
+                debug("Finished adding children to <%s>", current_node)
+                self.match_name(current_node.node_name)
+                return current_node
+
+            child = self.node(parent_node=current_node)
+
+            debug('Adding child node %s to %s', child, current_node)
+            current_node.child_nodes.append(child)
+        raise SyntaxError("Oh no!")
+
+    def self_closing(self, parent_node=None):
+        # XXX code smell
+        if isinstance(self.current, Data):
+            child = Node(  # XXX node_type
+                "text", Node.TEXT_NODE,
+                node_value=self.current.data,
+                parent_node=parent_node)
+            self.match_type(Data)
+        elif isinstance(self.current, Comment):
+            child = Node(
+                "comment", Node.COMMENT_NODE, node_value=self.current.data,
+                parent_node=parent_node)
+            self.match_type(Comment)
+        elif isinstance(self.current, Pi):
+            child = Node(
+                "processing_instruction", Node.PROCESSING_INSTRUCTION_NODE,
+                node_value=self.current.data,
+                parent_node=parent_node)
+            self.match_type(Pi)
+        elif isinstance(self.current, Decl):
+            child = Node(
+                 "document_type", Node.DOCUMENT_TYPE_NODE,
+                 node_value=self.current.decl,
+                 parent_node=parent_node)
+            self.match_type(Decl)
+        # self-closing start-tag
+        elif isinstance(self.current, StartTag):
+            child = Node(
+                self.current.name, Node.ELEMENT_NODE,
+                attributes=self.current.attributes)
+            self.match_type(StartTag)
+
+        if not child:
+            raise SyntaxError("Unknown token {}".format(self.current))
+
+        return child
 
     def next(self):
         self.current = self.tokens.pop(0)
-        debug("Read next token: %s", self.current)
 
     def match_name(self, name):
-        debug("Matching name %s", name)
         assert type(self.current) in [StartTag, EndTag], (
             "Expected {} to be StartTag or EndTag".format(self.current))
         assert self.current.name == name, (
@@ -64,7 +135,6 @@ class Parser:
         self.next()
 
     def match_type(self, token_type):
-        debug("Matching token type %s", token_type)
         assert isinstance(self.current, token_type), (
             "Expected {}, got {} instead".format(token_type, self.current))
         self.next()
