@@ -1,13 +1,7 @@
 from unittest import TestCase
 
-from ..lexer import (
-    HTMLLexer,
-    StartTag,
-    Data,
-    EndTag,
-    Comment,
-    EOF,
-)
+from ..lexer import HTMLLexer
+from .fixtures import tokens
 
 
 class HTMLLexerTestCase(TestCase):
@@ -27,19 +21,7 @@ World
 </body>
 </html>
 """
-        expected = str([
-            StartTag('HTML', []),
-            StartTag('HEAD', []),
-            StartTag('TITLE', []),
-            Data('Hello'),
-            EndTag('TITLE'),
-            EndTag('HEAD'),
-            StartTag('BODY', []),
-            Data('World'),
-            EndTag('BODY'),
-            EndTag('HTML'),
-            EOF(),
-        ])
+        expected = str(tokens)
         self.lexer.feed(test_case)
         self.assertEqual(
             str(self.lexer.dump()),
