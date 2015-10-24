@@ -71,16 +71,15 @@ class Parser:
         if not isinstance(self.current, StartTag):
             return self.self_closing(parent_node=parent_node)
 
-        debug("Entering <%s>", self.current.name)
-
         # Store token for later matching
         current_node = ElementNode(self.current.name, self.current.attributes)
+        debug("Created <%s> Node", current_node)
         self.match_type(StartTag)
 
         if current_node.node_name in self.SELF_CLOSING_TAGS:
             return current_node
 
-        debug("Creating <%s> Node", current_node)
+        debug("Entering <%s>", self.current.name)
 
         # While there are things to match
         while self.current:
@@ -98,31 +97,30 @@ class Parser:
         raise SyntaxError("Oh no!")
 
     def self_closing(self, parent_node=None):
-        # XXX code smell
         if isinstance(self.current, Data):
-            child = TextNode(self.current.data, parent_node=parent_node)
-            self.match_type(Data)
+            child = TextNode(
+                self.current.data,
+                parent_node=parent_node,
+            )
         elif isinstance(self.current, Comment):
             child = CommentNode(
                 self.current.data,
                 parent_node=parent_node,
             )
-            self.match_type(Comment)
         elif isinstance(self.current, Pi):
             child = ProcessingInstructionNode(
                 self.current.data,
                 parent_node=parent_node,
             )
-            self.match_type(Pi)
         elif isinstance(self.current, Decl):
             child = DocumentTypeNode(
                  self.current.decl,
                  parent_node=parent_node,
             )
-            self.match_type(Decl)
         else:
             raise SyntaxError("Unknown token {}".format(self.current))
 
+        self.match_type(type(self.current))
         return child
 
     def next(self):
