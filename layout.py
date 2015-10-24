@@ -1,4 +1,16 @@
-from pyx import *
+from PIL import Image, ImageDraw
+
+
+class Style:
+
+    __slots__ = [
+        'display',
+    ]
+
+    def __init__(self, **kwargs):
+        for slot in self.__slots__:
+            if slot in kwargs:
+                setattr(self, slot, kwargs[slot])
 
 
 class Frame:
@@ -7,15 +19,20 @@ class Frame:
         'P',
         'DIV',
         'BODY',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'HEADER',
+        'UL',
+        'LI',
     ]
-
-    BLOCK = 0
-    INLINE = 1
-    INLINE_BLOCK = 2
 
     __slots__ = [
         'node',
-        'display',
+        'style',
         'w',
         'h',
         'x',
@@ -25,11 +42,12 @@ class Frame:
 
     def __init__(self, node):
         self.node = node
+        self.style = Style()
 
         if self.node.node_name in self.BLOCK_NODES:
-            self.display = self.BLOCK
+            self.style.display = 'block'
         else:
-            self.display = self.INLINE
+            self.style.display = 'inline'
 
         self.child_frames = [
             self.__class__(child_node) for child_node in node.child_nodes
@@ -37,28 +55,34 @@ class Frame:
 
         self.x = self.y = self.w = self.h = 0
 
-    def reflow(self, w, h, x=0, y=0):
-        self.w = w
-        self.h = h
-        self.x = x
-        self.y = y
+    def reflow(self, container_width, container_height,
+               container_x=0, container_y=0):
+        self.w = container_width
+        self.h = container_height
+        self.x = container_x
+        self.y = container_y
 
-        if self.display == self.INLINE:
-            required_width = 100  # ??
-            required_height = 20
+        if self.style.display == 'inline':
+            required_width = len(self.node.node_value or "") * 10  # ??
+            required_height = 20 if self.node.node_value else 0
         else:
-            required_width = w
-            required_height = h
+            required_width = 0
+            required_height = 0
 
         for child_frame in self.child_frames:
-            child_width, child_height = child_frame.reflow(w, h, x, y)
-            if child_frame.display == self.INLINE:
-                x += child_width
+            child_width, child_height = child_frame.reflow(
+                self.w, self.h, self.x, self.y)
+            if child_frame.style.display == 'inline':
+                self.x += child_width
             else:
-                y += child_height
+                self.y += child_height
 
             required_width += child_width
             required_height += child_height
+
+        if self.x + required_width > container_width:
+            self.x = container_x
+            self.y += required_height
 
         self.w = required_width
         self.h = required_height
@@ -66,10 +90,7 @@ class Frame:
         return required_width, required_height
 
     def __str__(self):
-        if self.display == self.BLOCK:
-            return "BLOCK: {}".format(self.node)
-        else:
-            return "INLINE: {}".format(self.node)
+        return "{self.style.display}: {self.node}".format(self=self)
 
     def pprint(self):
         print("{}x{}, size {}x{}: {}".format(
@@ -82,17 +103,20 @@ class Frame:
 
     def draw(self):
         # set up dat window
-        c = canvas.canvas()
+        i = Image.new('RGBA', (self.w, self.h))
+        draw = ImageDraw.Draw(i)
+        self._draw(draw)
+        i.save("helloworld.png")
 
-        self._draw(c)
-        c.writePDFfile()
+    def _draw(self, draw, level=0):
+        draw.rectangle(
+            (self.x, self.y, self.w + self.x, self.h + self.y),
+            fill='green',
+            outline='red',
+        )
+        draw.text(
+            (self.x, self.y),
+            self.node.node_value or self.node.node_name)
 
-    def _draw(self, c):
-        c.stroke(path.rect(
-            self.x,
-            self.y,
-            self.w,
-            self.h,
-        ))
         for child_frame in self.child_frames:
-            child_frame._draw(c)
+            child_frame._draw(draw, level=level + 1)

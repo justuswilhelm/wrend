@@ -9,7 +9,14 @@ from .lexer import (
     Pi,
     EOF,
 )
-from .dom import Node
+from .dom import (
+    ElementNode,
+    DocumentNode,
+    TextNode,
+    CommentNode,
+    ProcessingInstructionNode,
+    DocumentTypeNode,
+)
 
 
 class Parser:
@@ -45,7 +52,7 @@ class Parser:
             debug('Dropping empty start token %s', self.tokens[0])
         debug('Starting recursive descent')
 
-        document = Node('#document', Node.DOCUMENT_NODE)
+        document = DocumentNode()
         while not isinstance(self.current, EOF):
             document.child_nodes.append(self.node())
         return document
@@ -61,9 +68,7 @@ class Parser:
         debug("Entering <%s>", self.current.name)
 
         # Store token for later matching
-        current_node = Node(
-            self.current.name, Node.ELEMENT_NODE,
-            attributes=self.current.attributes)
+        current_node = ElementNode(self.current.name, self.current.attributes)
         self.match_type(StartTag)
         debug("Creating <%s> Node", current_node)
 
@@ -85,32 +90,32 @@ class Parser:
     def self_closing(self, parent_node=None):
         # XXX code smell
         if isinstance(self.current, Data):
-            child = Node(
-                "#text", Node.TEXT_NODE,
-                node_value=self.current.data,
-                parent_node=parent_node)
+            child = TextNode(self.current.data, parent_node=parent_node)
             self.match_type(Data)
         elif isinstance(self.current, Comment):
-            child = Node(
-                "#comment", Node.COMMENT_NODE, node_value=self.current.data,
-                parent_node=parent_node)
+            child = CommentNode(
+                self.current.data,
+                parent_node=parent_node,
+            )
             self.match_type(Comment)
         elif isinstance(self.current, Pi):
-            child = Node(  # XXX this is not cleanly implemented!
-                "#pi", Node.PROCESSING_INSTRUCTION_NODE,
-                node_value=self.current.data,
-                parent_node=parent_node)
+            child = ProcessingInstructionNode(
+                self.current.data,
+                parent_node=parent_node,
+            )
             self.match_type(Pi)
         elif isinstance(self.current, Decl):
-            child = Node(
-                 self.current.decl, Node.DOCUMENT_TYPE_NODE,
-                 parent_node=parent_node)
+            child = DocumentTypeNode(
+                 self.current.decl,
+                 parent_node=parent_node,
+            )
             self.match_type(Decl)
         # self-closing start-tag
         elif isinstance(self.current, StartTag):
-            child = Node(
-                self.current.name, Node.ELEMENT_NODE,
-                attributes=self.current.attributes)
+            child = ElementNode(
+                self.current.name,
+                attributes=self.current.attributes,
+            )
             self.match_type(StartTag)
 
         if not child:

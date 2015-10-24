@@ -19,7 +19,6 @@ def main():
     tokens = lexer.dump()
     parser = Parser(tokens)
     dom = parser.parse()
-    layout = Frame(dom.child_nodes[2].child_nodes[1])  # body
+    dom.pprint()
+    layout = Frame(dom.child_nodes[1].child_nodes[1])  # body
     layout.reflow(200, 200)
-    layout.pprint()
-    layout.draw()
