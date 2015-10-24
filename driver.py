@@ -4,7 +4,7 @@ from os import getenv
 
 from .lexer import HTMLLexer
 from .parser import Parser
-from .pprint import pprint
+from .layout import Frame
 
 basicConfig(level=getenv('LOG_LEVEL'))
 
@@ -18,5 +18,8 @@ def main():
 
     tokens = lexer.dump()
     parser = Parser(tokens)
-    ast = parser.parse()
-    pprint(ast)
+    dom = parser.parse()
+    layout = Frame(dom.child_nodes[2].child_nodes[1])  # body
+    layout.reflow(200, 200)
+    layout.pprint()
+    layout.draw()

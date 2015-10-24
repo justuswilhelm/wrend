@@ -5,6 +5,10 @@ from ..lexer import (
     EOF,
 )
 
+from ..dom import (
+    Node,
+)
+
 tokens = [
     StartTag('HTML', []),
     StartTag('HEAD', []),
@@ -18,3 +22,13 @@ tokens = [
     EndTag('HTML'),
     EOF(),
 ]
+
+document = Node('#document', Node.DOCUMENT_NODE, child_nodes=[
+    Node('HTML', Node.ELEMENT_NODE, child_nodes=[
+        Node('BODY', Node.ELEMENT_NODE, child_nodes=[
+            Node('H1', Node.ELEMENT_NODE, child_nodes=[
+                Node('#text', Node.TEXT_NODE, node_value='Hello World')
+            ]),
+        ]),
+    ]),
+])

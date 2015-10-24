@@ -1,7 +1,6 @@
-def pprint(node, level=0, indent="  "):
-
+def pprint_dom(node, level=0, indent="  "):
     current_indent = indent * level
     print("{}{}".format(current_indent, node))
 
     for child_node in node.child_nodes:
-        pprint(child_node, level + 1)
+        pprint_dom(child_node, level + 1)
