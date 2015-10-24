@@ -69,52 +69,63 @@ class DocumentNode(Node):
     body = None
     head = None
 
-    def __init__(self):
-        super().__init__('#document', NodeType.DOCUMENT_NODE)
+    def __init__(self, child_nodes=None):
+        super().__init__(
+            '#document',
+            NodeType.DOCUMENT_NODE,
+            child_nodes=child_nodes,
+        )
 
 
 class ElementNode(Node):
-    def __init__(self, node_name, attributes=None, parent_node=None):
+    def __init__(self, node_name, attributes=None, parent_node=None,
+                 child_nodes=None):
         super().__init__(
             node_name,
             NodeType.ELEMENT_NODE,
             attributes=attributes,
             parent_node=parent_node,
+            child_nodes=child_nodes,
         )
 
 
 class TextNode(Node):
-    def __init__(self, node_value, parent_node=None):
+    def __init__(self, node_value, parent_node=None, child_nodes=None):
         super().__init__(
             '#text', NodeType.TEXT_NODE,
             node_value=node_value,
             parent_node=parent_node,
+            child_nodes=child_nodes,
         )
 
 
 class CommentNode(Node):
-    def __init__(self, node_value, parent_node=None):
+    def __init__(self, node_value, parent_node=None, child_nodes=None):
         super().__init__(
             "#comment",
             NodeType.COMMENT_NODE,
             node_value=node_value,
-            parent_node=parent_node)
+            parent_node=parent_node,
+            child_nodes=child_nodes,
+        )
 
 
 class ProcessingInstructionNode(Node):
-    def __init__(self, node_value, parent_node=None):
+    def __init__(self, node_value, parent_node=None, child_nodes=None):
         super().__init__(
             "#pi",  # XXX node_value is not #pi
             NodeType.PROCESSING_INSTRUCTION_NODE,
             node_value=node_value,
             parent_node=parent_node,
+            child_nodes=child_nodes,
         )
 
 
 class DocumentTypeNode(Node):
-    def __init__(self, decl, parent_node=None):
+    def __init__(self, decl, parent_node=None, child_nodes=None):
         super().__init__(
             decl,
             NodeType.DOCUMENT_TYPE_NODE,
             parent_node=parent_node,
+            child_nodes=child_nodes,
         )

@@ -6,7 +6,9 @@ from ..lexer import (
 )
 
 from ..dom import (
-    Node,
+    DocumentNode,
+    TextNode,
+    ElementNode,
 )
 
 tokens = [
@@ -23,11 +25,11 @@ tokens = [
     EOF(),
 ]
 
-document = Node('#document', Node.DOCUMENT_NODE, child_nodes=[
-    Node('HTML', Node.ELEMENT_NODE, child_nodes=[
-        Node('BODY', Node.ELEMENT_NODE, child_nodes=[
-            Node('H1', Node.ELEMENT_NODE, child_nodes=[
-                Node('#text', Node.TEXT_NODE, node_value='Hello World')
+document = DocumentNode(child_nodes=[
+    ElementNode('HTML', child_nodes=[
+        ElementNode('BODY', child_nodes=[
+            ElementNode('H1', child_nodes=[
+                TextNode(node_value='Hello World')
             ]),
         ]),
     ]),

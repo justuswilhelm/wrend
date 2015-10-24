@@ -79,7 +79,7 @@ class Parser:
         if current_node.node_name in self.SELF_CLOSING_TAGS:
             return current_node
 
-        debug("Entering <%s>", self.current.name)
+        debug("Entering <%s>", current_node.node_name)
 
         # While there are things to match
         while self.current:
