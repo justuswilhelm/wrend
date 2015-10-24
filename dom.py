@@ -16,6 +16,12 @@ class NodeType(Enum):
 
 
 class Node(metaclass=ABCMeta):
+    node_name = None
+    node_type = None
+    parent_node = None
+    child_nodes = None
+    node_value = None
+    attributes = {}
 
     @abstractmethod
     def __init__(self, node_name, node_type, parent_node=None,
@@ -26,7 +32,7 @@ class Node(metaclass=ABCMeta):
         self.parent_node = parent_node
         self.child_nodes = child_nodes or []
         self.node_value = node_value
-        self.attributes = {} if not attributes else dict(attributes)
+        self.attributes = dict(attributes or [])
 
     @property
     def first_child(self):

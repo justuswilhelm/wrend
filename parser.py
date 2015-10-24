@@ -55,14 +55,20 @@ class Parser:
         document = DocumentNode()
         while not isinstance(self.current, EOF):
             document.child_nodes.append(self.node())
+
+        for child_node in document.child_nodes:  # dat code_smell
+            if child_node.node_name == 'HTML':
+                html = child_node
+        for child_node in html.child_nodes:
+            if child_node.node_name == 'BODY':
+                document.body = child_node
+            if child_node.node_name == 'HEAD':
+                document.head = child_node
+
         return document
 
     def node(self, parent_node=None):
         if not isinstance(self.current, StartTag):
-            return self.self_closing(parent_node=parent_node)
-
-        if self.current.name in self.SELF_CLOSING_TAGS:
-            debug("Encountered self-closing <%s>", self.current.name)
             return self.self_closing(parent_node=parent_node)
 
         debug("Entering <%s>", self.current.name)
@@ -70,6 +76,10 @@ class Parser:
         # Store token for later matching
         current_node = ElementNode(self.current.name, self.current.attributes)
         self.match_type(StartTag)
+
+        if current_node.node_name in self.SELF_CLOSING_TAGS:
+            return current_node
+
         debug("Creating <%s> Node", current_node)
 
         # While there are things to match
@@ -110,15 +120,7 @@ class Parser:
                  parent_node=parent_node,
             )
             self.match_type(Decl)
-        # self-closing start-tag
-        elif isinstance(self.current, StartTag):
-            child = ElementNode(
-                self.current.name,
-                attributes=self.current.attributes,
-            )
-            self.match_type(StartTag)
-
-        if not child:
+        else:
             raise SyntaxError("Unknown token {}".format(self.current))
 
         return child

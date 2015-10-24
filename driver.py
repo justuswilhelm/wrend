@@ -20,5 +20,5 @@ def main():
     parser = Parser(tokens)
     dom = parser.parse()
     dom.pprint()
-    layout = Frame(dom.child_nodes[1].child_nodes[1])  # body
+    layout = Frame(dom.body)  # body
     layout.reflow(200, 200)
