@@ -12,6 +12,9 @@ EOF = namedtuple('EOF', [])
 
 
 class HTMLLexer(HTMLParser):
+
+    MULTIPLE_WHITESPACE_RE = r'\s+'
+
     tokens = []
 
     def __init__(self):
@@ -29,13 +32,11 @@ class HTMLLexer(HTMLParser):
 
     def handle_data(self, data):
         debug('Data "%s"', data)
-        data = data.strip()
         if data:
             self.tokens.append(Data(data))
 
     def handle_comment(self, data):
         debug('Comment "%s"', data)
-        data = data.strip()
         if data:
             self.tokens.append(Comment(data))
 
@@ -48,4 +49,4 @@ class HTMLLexer(HTMLParser):
         self.tokens.append(Pi(data))
 
     def dump(self):
-        return self.tokens + [EOF()]
+        return tuple(self.tokens + [EOF()])

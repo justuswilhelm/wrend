@@ -1,6 +1,9 @@
 from PIL import Image, ImageDraw
 
 
+from .dom import TextNode
+
+
 class Style:
 
     __slots__ = [
@@ -38,11 +41,18 @@ class Frame:
         'x',
         'y',
         'child_frames',
+        'overflowed',
+        'text',
     ]
 
     def __init__(self, node):
         self.node = node
         self.style = Style()
+        self.overflowed = False
+
+        self.text = ''
+        if isinstance(self.node, TextNode):
+            self.text = self.node.whole_text
 
         if self.node.node_name in self.BLOCK_NODES:
             self.style.display = 'block'
@@ -50,44 +60,21 @@ class Frame:
             self.style.display = 'inline'
 
         self.child_frames = [
-            self.__class__(child_node) for child_node in node.child_nodes
+            self.__class__(child_node) for child_node in self.node.child_nodes
         ]
 
         self.x = self.y = self.w = self.h = 0
 
-    def reflow(self, container_width, container_height,
-               container_x=0, container_y=0):
-        self.w = container_width
-        self.h = container_height
-        self.x = container_x
-        self.y = container_y
-
-        if self.style.display == 'inline':
-            required_width = len(self.node.node_value or "") * 10  # ??
-            required_height = 20 if self.node.node_value else 0
-        else:
-            required_width = 0
-            required_height = 0
+    def reflow(self):
+        if self.text:
+            self.w = len(self.text) * 6
+            self.h = 20
 
         for child_frame in self.child_frames:
-            child_width, child_height = child_frame.reflow(
-                self.w, self.h, self.x, self.y)
-            if child_frame.style.display == 'inline':
-                self.x += child_width
-            else:
-                self.y += child_height
-
-            required_width += child_width
-            required_height += child_height
-
-        if self.x + required_width > container_width:
-            self.x = container_x
-            self.y += required_height
-
-        self.w = required_width
-        self.h = required_height
-
-        return required_width, required_height
+            child_frame.x = self.x + self.w
+            child_frame.reflow()
+            self.w += child_frame.w
+            self.h = max(self.h, child_frame.h)
 
     def __str__(self):
         return "{self.style.display}: {self.node}".format(self=self)
@@ -114,9 +101,8 @@ class Frame:
             fill='green',
             outline='red',
         )
-        draw.text(
-            (self.x, self.y),
-            self.node.node_value or self.node.node_name)
+        if self.text:
+            draw.text((self.x, self.y), self.text)
 
         for child_frame in self.child_frames:
             child_frame._draw(draw, level=level + 1)

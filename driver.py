@@ -21,4 +21,6 @@ def main():
     dom = parser.parse()
     dom.pprint()
     layout = Frame(dom.body)  # body
-    layout.reflow(200, 200)
+    layout.reflow()
+    layout.pprint()
+    layout.draw()

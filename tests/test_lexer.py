@@ -6,6 +6,7 @@ from .fixtures import tokens
 
 class HTMLLexerTestCase(TestCase):
     def setUp(self):
+        self.maxDiff = None
         self.lexer = HTMLLexer()
 
     def test_simple_case(self):
@@ -24,6 +25,6 @@ World
         expected = str(tokens)
         self.lexer.feed(test_case)
         self.assertEqual(
-            str(self.lexer.dump()),
             expected,
+            str(self.lexer.dump()),
         )

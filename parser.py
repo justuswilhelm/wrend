@@ -40,6 +40,7 @@ class Parser:
        'WBR',
     ]
     tokens = []
+    position = 0
     current = None
 
     def __init__(self, tokens):
@@ -67,9 +68,9 @@ class Parser:
 
         return document
 
-    def node(self, parent_node=None):
+    def node(self):
         if not isinstance(self.current, StartTag):
-            return self.self_closing(parent_node=parent_node)
+            return self.self_closing()
 
         # Store token for later matching
         current_node = ElementNode(self.current.name, self.current.attributes)
@@ -90,32 +91,28 @@ class Parser:
                 self.match_name(current_node.node_name)
                 return current_node
 
-            child = self.node(parent_node=current_node)
+            child = self.node()
 
             debug('Adding child node %s to %s', child, current_node)
-            current_node.child_nodes.append(child)
+            current_node.append_child(child)
         raise SyntaxError("Oh no!")
 
-    def self_closing(self, parent_node=None):
+    def self_closing(self):
         if isinstance(self.current, Data):
             child = TextNode(
                 self.current.data,
-                parent_node=parent_node,
             )
         elif isinstance(self.current, Comment):
             child = CommentNode(
                 self.current.data,
-                parent_node=parent_node,
             )
         elif isinstance(self.current, Pi):
             child = ProcessingInstructionNode(
                 self.current.data,
-                parent_node=parent_node,
             )
         elif isinstance(self.current, Decl):
             child = DocumentTypeNode(
                  self.current.decl,
-                 parent_node=parent_node,
             )
         else:
             raise SyntaxError("Unknown token {}".format(self.current))
@@ -124,7 +121,8 @@ class Parser:
         return child
 
     def next(self):
-        self.current = self.tokens.pop(0)
+        self.current = self.tokens[self.position]
+        self.position += 1
 
     def match_name(self, name):
         assert type(self.current) in [StartTag, EndTag], (

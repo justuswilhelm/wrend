@@ -5,32 +5,26 @@ from ..lexer import (
     EOF,
 )
 
-from ..dom import (
-    DocumentNode,
-    TextNode,
-    ElementNode,
-)
+from ..parser import Parser
 
-tokens = [
+tokens = (
     StartTag('HTML', []),
+    Data('\n'),
     StartTag('HEAD', []),
+    Data('\n'),
     StartTag('TITLE', []),
-    Data('Hello'),
+    Data('\nHello\n'),
     EndTag('TITLE'),
+    Data('\n'),
     EndTag('HEAD'),
+    Data('\n'),
     StartTag('BODY', []),
-    Data('World'),
+    Data('\nWorld\n'),
     EndTag('BODY'),
+    Data('\n'),
     EndTag('HTML'),
     EOF(),
-]
+)
 
-document = DocumentNode(child_nodes=[
-    ElementNode('HTML', child_nodes=[
-        ElementNode('BODY', child_nodes=[
-            ElementNode('H1', child_nodes=[
-                TextNode(node_value='Hello World')
-            ]),
-        ]),
-    ]),
-])
+
+document = Parser(tokens).parse()
